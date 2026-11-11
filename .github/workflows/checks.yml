@@ -1,0 +1,74 @@
+name: Checks
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  cli:
+    name: CLI checks
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: 22.x
+          cache: npm
+      - run: npm ci
+      - run: npm test
+      - run: npm pack --dry-run
+
+  compatibility:
+    name: Keycloak ${{ matrix.keycloak }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - keycloak: '23.0.0'
+            java: '17'
+          - keycloak: '24.0.0'
+            java: '17'
+          - keycloak: '25.0.0'
+            java: '21'
+          - keycloak: '26.0.0'
+            java: '21'
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: 22.x
+          cache: npm
+      - uses: actions/setup-java@77dd5b2ce225ea11469928ac317850245a74ae78 # v6.2.0
+        with:
+          distribution: temurin
+          java-version: ${{ matrix.java }}
+      - run: npm ci
+      - name: Download official Keycloak distribution
+        env:
+          KEYCLOAK_VERSION: ${{ matrix.keycloak }}
+        run: |
+          mkdir -p "$RUNNER_TEMP/keycloak-distributions"
+          curl --fail --silent --show-error --location --retry 3 \
+            "https://github.com/keycloak/keycloak/releases/download/$KEYCLOAK_VERSION/keycloak-$KEYCLOAK_VERSION.tar.gz" \
+            --output "$RUNNER_TEMP/keycloak.tar.gz"
+          tar -xzf "$RUNNER_TEMP/keycloak.tar.gz" -C "$RUNNER_TEMP/keycloak-distributions"
+      - name: Run SDK, CLI and official kcadm comparison
+        env:
+          KEYCLOAK_VERSION: ${{ matrix.keycloak }}
+        run: npm run test:matrix -- --servers "$RUNNER_TEMP/keycloak-distributions" "$KEYCLOAK_VERSION"

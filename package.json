@@ -1,0 +1,38 @@
+{
+  "name": "kcadm-node",
+  "version": "26.8.2-rc.1",
+  "description": "Keycloak administration CLI for Node.js with kcadm-style commands",
+  "scripts": {
+    "test": "npm run build && node --test test/cli.test.js",
+    "test:coverage": "npm run build && node --test --experimental-test-coverage --test-coverage-include=\"dist/*.js\" test/cli.test.js",
+    "build": "tsc",
+    "test:matrix": "npm run build && tsc -p test/integration && node --experimental-strip-types test/integration/run.ts",
+    "prepack": "npm run build"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/thundax-lyp/kcadm-node.git"
+  },
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/thundax-lyp/kcadm-node/issues"
+  },
+  "homepage": "https://github.com/thundax-lyp/kcadm-node#readme",
+  "type": "module",
+  "bin": {
+    "kcadm-node": "dist/cli.js"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "files": [
+    "dist"
+  ],
+  "dependencies": {
+    "@keycloak/keycloak-admin-client": "26.8.2"
+  },
+  "devDependencies": {
+    "@types/node": "22.20.5",
+    "typescript": "5.9.3"
+  }
+}
