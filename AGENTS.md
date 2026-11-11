@@ -1,8 +1,16 @@
 # kcadm-node
 
-This repository contains the TypeScript CLI and the agent-facing Skill in
-`skills/keycloak-admin/SKILL.md`. The CLI runs on Node.js 22 or later and
-uses the official `@keycloak/keycloak-admin-client` pinned to 26.8.2.
+Use Node.js 22 or later for CLI work. The CLI depends on the official
+`@keycloak/keycloak-admin-client` pinned to 26.8.2.
+Use TypeScript and Node.js for project tooling, including the server matrix
+runner at `test/integration/run.ts`. Do not add `.py` files or Python runtime
+dependencies to the project.
+
+## Documentation
+
+Write README.md for people using or contributing to the CLI. Put coding-agent
+instructions in AGENTS.md and agent workflows for operating the CLI in
+`skills/keycloak-admin/SKILL.md`. Repeat facts where each audience needs them.
 
 ## CLI behavior
 
@@ -25,6 +33,9 @@ outcome, verify remote state before retrying.
   and 26.0.0. Record the exact versions tested.
 - Update the Skill examples when its CLI usage changes. Verify the
   package contents locally with `npm pack --dry-run`.
+- For npm release candidates, use the pinned SDK version as the base and
+  append `-rc.N`. Start at `1` for each SDK version and increment for later
+  candidates. Keep the package manifest, lockfile, and README examples in sync.
 - The current milestone is local validation. Publishing to npm requires
   an explicit release request.
 

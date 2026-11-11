@@ -1,6 +1,6 @@
 {
   "name": "kcadm-node",
-  "version": "0.1.0",
+  "version": "26.8.2-rc.1",
   "description": "Keycloak administration CLI for Node.js with kcadm-style commands",
   "scripts": {
     "test": "npm run build && node --test test/cli.test.js",
