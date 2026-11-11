@@ -154,9 +154,5 @@ vite.config.ts.timestamp-*
 # JetBrains IDE project files
 /.idea/
 
-# Python bytecode
-__pycache__/
-*.pyc
-
 # macOS Finder metadata
 .DS_Store

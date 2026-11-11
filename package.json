@@ -6,7 +6,7 @@
     "test": "npm run build && node --test test/cli.test.js",
     "test:coverage": "npm run build && node --test --experimental-test-coverage --test-coverage-include=\"dist/*.js\" test/cli.test.js",
     "build": "tsc",
-    "test:matrix": "npm run build && python3 test/integration/run.py",
+    "test:matrix": "npm run build && tsc -p test/integration && node --experimental-strip-types test/integration/run.ts",
     "prepack": "npm run build"
   },
   "repository": {
