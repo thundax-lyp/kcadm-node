@@ -1,0 +1,13 @@
+{
+  "name": "keycloak-admin-skill",
+  "private": true,
+  "engines": {
+    "node": ">=22"
+  },
+  "dependencies": {
+    "kcadm-node": "26.8.2-rc.1"
+  },
+  "scripts": {
+    "kcadm": "kcadm-node"
+  }
+}

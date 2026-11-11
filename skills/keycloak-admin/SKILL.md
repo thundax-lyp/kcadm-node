@@ -1,18 +1,72 @@
 ---
 name: keycloak-admin
-description: Manage a Keycloak instance with kcadm-node. Use when asked to query or change Keycloak users, clients, realms, role mappings, groups, or group memberships.
+description: Query and manage Keycloak resources, user roles, and group memberships with kcadm-node.
 ---
 
 # Keycloak administration
 
-Use the local CLI build during development. From the kcadm-node checkout, run `npm ci` and `npm run build` if the build is missing, then invoke `node dist/cli.js`. If a matching CLI is already installed, use `kcadm-node`. Run `--help` to check the supported kcadm options.
+Use Node.js 22 or later. The sibling `package.json` declares the published
+`kcadm-node` dependency and the `kcadm` script that runs it. Set `SKILL_DIR`
+to the absolute path of the directory containing this SKILL.md. Install the
+locked dependency there before first use and check the CLI help.
 
-Use the provided connection settings. Service accounts use `KC_SERVER`, `KC_AUTH_REALM`, `KC_CLIENT_ID`, and `KC_CLIENT_SECRET`. An existing access token can be supplied via `KC_ACCESS_TOKEN`. Keep credentials in the execution environment. `--realm` selects the authentication realm and `-r` selects the realm to manage. Pass `-r` explicitly for realm-scoped changes.
+```sh
+npm --prefix "$SKILL_DIR" ci --registry=https://registry.npmjs.org
+npm --prefix "$SKILL_DIR" run --silent kcadm -- --help
+```
 
-Find resources before changing them. Prefer a stable ID from an exact lookup, and resolve any ambiguity before acting. For example, use `get users -r demo -q username=alice -q exact=true -F id,username`. Use the internal Client ID in resource paths, and pass the public `clientId` to `--cclientid` when working with roles.
+In each reference example, replace the leading `kcadm-node` with
+`npm --prefix "$SKILL_DIR" run --silent kcadm --` and pass the remaining
+arguments as shown. The silent flag keeps npm script banners out of JSON
+output. npm runs the script from `SKILL_DIR`, so use absolute paths for `-f`,
+`--config`, and `KC_CONFIG` when they refer to files outside that directory.
 
-- Use `get`, `create`, `update`, and `delete` with relative Admin REST resource paths. Use `create ... -i` to capture an ID. For updates, `-s` merges by default and `-f` replaces the payload by default. Add `-m` to merge a file with the current resource.
-- Use `get-roles`, `add-roles`, and `remove-roles` with `--uid` or `--uusername`, and repeat `--rolename` for multiple roles. Add `--cid` or `--cclientid` for client roles. Compare direct mappings before and after a grant or revocation.
-- For child group listing, use `get groups/ID/children -r REALM --server-version VERSION` with the known server version to normalize older server behavior. For membership use `update users/USER_ID/groups/GROUP_ID -r REALM -n` to add and `delete` on the same resource to remove.
-- Read the resource back after mutations. Keycloak can return success and omit an unmanaged user attribute. Report the observed state and check the Realm's User Profile policy if permitted. Changing that policy is a separate operation.
-- If a write times out or its response is lost, read the resource or mapping before retrying. If the result remains unknown, say so.
+For a read with credentials already available, substitute the requested
+realm and lookup value in this example.
+
+```sh
+npm --prefix "$SKILL_DIR" run --silent kcadm -- get users \
+  -r demo -q username=alice -q exact=true -F id,username
+```
+
+## Reference routing
+
+Choose a reference for each operation by what it reads or changes. Resolve
+paths relative to this SKILL.md and read the selected file before composing
+the command. A request with several operations can use several references.
+
+- For assigning roles to a user or inspecting their direct, effective, or
+  available realm or client roles, read [role-mappings.md](references/role-mappings.md).
+- For subgroup browsing, group member queries, or adding or removing a user
+  from a group, read [groups.md](references/groups.md).
+- For other Admin REST reads or writes, including edits to role definitions,
+  and for generic CLI flags or payload and merge behavior, read
+  [resources.md](references/resources.md).
+
+Read [connection.md](references/connection.md) before the first request when
+selecting or troubleshooting credentials, a profile, or the authentication
+realm. For a write, read [verification.md](references/verification.md) before
+issuing it so you can plan the readback. Use the same reference to decide the
+next step after a timeout or failed readback.
+
+For example, creating a user and granting a client role uses resources.md
+for the create, role-mappings.md for the grant, and verification.md to plan
+the checks for both operations.
+
+## Execution
+
+1. Establish the instance, authentication realm, and target realm using the
+   supplied connection settings. Use `-r REALM` explicitly for realm-scoped
+   writes. For realm-level paths such as `realms/demo`, verify the target in the
+   path itself. Keep credentials in the execution environment.
+2. For a change to an existing resource, resolve any supplied name to one
+   exact match and use its internal ID for subsequent calls. If the target is
+   missing or ambiguous, stop before writing and report what the lookup found.
+   For a create, resolve any parent or referenced resource and capture the new
+   resource ID when the endpoint returns one.
+3. Apply the requested change using the relevant command. Choose update merge
+   behavior deliberately. For role changes compare direct mappings, and for
+   membership changes inspect the user's groups.
+4. Read back the affected state and report what was observed. After an uncertain
+   write, verify remote state before retrying. If verification is unavailable,
+   report the outcome as unknown.
