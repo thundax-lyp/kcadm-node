@@ -60,10 +60,11 @@ function applySettings(result: unknown, settings: string[]) {
 function endpointUrl(base: string, endpoint: string, realm: string, query: string[]) {
   const url = new URL(base)
   const segments = endpoint.replace(/^\/+|\/+$/g, '').split('/').map(decodeURIComponent)
-  if (segments.some(part => !part || /[\\/?#]/.test(part) || part === '.' || part === '..' || part.includes(':'))) {
+  const [root] = segments
+  if (/^[a-z][a-z\d+.-]*:/i.test(root) ||
+      segments.some(part => !part || /[\\/?#]/.test(part) || part === '.' || part === '..')) {
     throw new Error('Use a relative Keycloak Admin REST endpoint')
   }
-  const [root] = segments
   if (!realm || ['.', '..'].includes(realm) || /[\\/]/.test(realm)) throw new Error('Invalid target realm')
   const prefix = root === 'realms' || root === 'serverinfo' ? '/admin' : '/admin/realms/' + encodeURIComponent(realm)
   url.pathname += (url.pathname.endsWith('/') ? prefix.slice(1) : prefix) + '/' + segments.map(encodeURIComponent).join('/')

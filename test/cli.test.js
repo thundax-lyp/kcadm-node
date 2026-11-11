@@ -306,8 +306,8 @@ test('invalid configuration fails without making Admin REST calls or saving a pr
 
 test('unsafe endpoints, realms and malformed query pairs are rejected before transport', async t => {
   const { connection, requests } = await mockServer(t, () => ({ json: [] }))
-  for (const endpoint of ['/', 'https://example.invalid/users', 'users//id', 'users/./id',
-    'users/%2e%2e', 'users/%2F', 'users/%5C', 'users/%3F', 'users/%23', 'users/http%3A']) {
+  for (const endpoint of ['/', 'https://example.invalid/users', 'https%3A/example.invalid/users',
+    'users//id', 'users/./id', 'users/%2e%2e', 'users/%2F', 'users/%5C', 'users/%3F', 'users/%23']) {
     await rejectsCli(invoke('get', endpoint, ...connection), /relative Keycloak Admin REST endpoint/)
   }
   await rejectsCli(invoke('get', 'users/%GG', ...connection), /URI malformed/)
@@ -318,6 +318,22 @@ test('unsafe endpoints, realms and malformed query pairs are rejected before tra
     await rejectsCli(invoke('get', 'users', ...connection, '-q', query), /Expected key=value/)
   }
   assert.deepEqual(requests, [])
+})
+
+test('generic resource commands accept literal and encoded colons in role names', async t => {
+  const { connection, requests } = await mockServer(t, request => request.method === 'GET'
+    ? { json: { name: 'team:admin' } }
+    : { status: request.method === 'POST' ? 201 : 204 })
+  await invoke('create', 'roles', ...connection, '-s', 'name=team:admin')
+  const { stdout } = await invoke('get', 'roles/team:admin', ...connection)
+  assert.deepEqual(JSON.parse(stdout), { name: 'team:admin' })
+  await invoke('update', 'roles/team%3Aadmin', ...connection, '-n', '-s', 'description=Admin')
+  await invoke('delete', 'roles/team:admin', ...connection)
+  const collection = '/auth/admin/realms/demo/roles'
+  const role = collection + '/team%3Aadmin'
+  assert.deepEqual(requests.map(({ method, url }) => [method, url]), [
+    ['POST', collection], ['GET', role], ['PUT', role], ['DELETE', role],
+  ])
 })
 
 test('file payloads preserve arrays and reject invalid JSON and unsafe assignments', async t => {

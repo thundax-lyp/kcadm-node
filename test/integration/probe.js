@@ -318,6 +318,14 @@ if (results['auth.client_credentials']?.pass) {
     assert.equal(local.enabled, false)
   })
   if (readyUser && readyClient) await check('cli.roles', () => {
+    const namedRole = 'roles/team:admin'
+    cli('create', 'roles', '-s', 'name=team:admin')
+    assert.equal(get(namedRole).name, 'team:admin')
+    cli('update', 'roles/team%3Aadmin', '-s', 'description=Team administrator')
+    assert.equal(get(namedRole).description, 'Team administrator')
+    cli('delete', namedRole)
+    assert.throws(() => get(namedRole), error => error.status === 1 && error.stderr.includes('404'))
+
     cli('create', 'clients/' + clientUniqueId + '/roles', '-s', 'name=cli-client-role')
     for (const [role, clientArgs] of [
       ['matrix-realm-role', []],
