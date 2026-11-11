@@ -30,7 +30,6 @@ outcome, verify remote state before retrying.
 
 ## Repository workflow
 
-See the [engineering docs](docs/README.md) for document placement.
 [Commit Rules](docs/00-governance/COMMIT-RULES.md) define authorization,
 scope and message format. [PR Rules](docs/00-governance/PR-RULES.md)
 define branch, review and merge requirements.

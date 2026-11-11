@@ -46,4 +46,4 @@ The runner copies distributions to temporary directories, starts servers on loop
 
 The [keycloak-admin Skill](skills/keycloak-admin/SKILL.md) documents how an agent uses the local CLI.
 
-See the [engineering docs](docs/README.md) for repository governance, requirements, design and verification.
+See the [commit rules](docs/00-governance/COMMIT-RULES.md) and [PR rules](docs/00-governance/PR-RULES.md) for repository workflow.
