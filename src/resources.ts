@@ -59,17 +59,16 @@ function applySettings(result: unknown, settings: string[]) {
 
 function endpointUrl(base: string, endpoint: string, realm: string, query: string[]) {
   const url = new URL(base)
-  const segments = endpoint.replace(/^\/+|\/+$/g, '').split('/')
-  if (segments.some(part => {
-    const decoded = decodeURIComponent(part)
-    return !decoded || /[\\/?#]/.test(decoded) || decoded === '.' || decoded === '..' || decoded.includes(':')
-  })) throw new Error('Use a relative Keycloak Admin REST endpoint')
+  const segments = endpoint.replace(/^\/+|\/+$/g, '').split('/').map(decodeURIComponent)
+  if (segments.some(part => !part || /[\\/?#]/.test(part) || part === '.' || part === '..' || part.includes(':'))) {
+    throw new Error('Use a relative Keycloak Admin REST endpoint')
+  }
   const [root] = segments
   if (!realm || ['.', '..'].includes(realm) || /[\\/]/.test(realm)) throw new Error('Invalid target realm')
   const prefix = root === 'realms' || root === 'serverinfo' ? '/admin' : '/admin/realms/' + encodeURIComponent(realm)
-  url.pathname += (url.pathname.endsWith('/') ? prefix.slice(1) : prefix) + '/' + segments.map(p => encodeURIComponent(decodeURIComponent(p))).join('/')
+  url.pathname += (url.pathname.endsWith('/') ? prefix.slice(1) : prefix) + '/' + segments.map(encodeURIComponent).join('/')
   for (const value of query) url.searchParams.append(...pair(value))
-  return url
+  return { url, segments }
 }
 
 async function request(kc: KeycloakAdminClient, url: URL, method: string, payload?: unknown) {
@@ -157,12 +156,12 @@ export type ResourceOptions = {
 }
 
 export async function resources(kc: KeycloakAdminClient, realm: string, command: ResourceCommand, endpoint: string, options: ResourceOptions) {
-  const url = endpointUrl(kc.baseUrl, endpoint, realm, options.query ?? [])
+  const { url, segments } = endpointUrl(kc.baseUrl, endpoint, realm, options.query ?? [])
   if (command === 'get') {
     if (options.offset !== undefined) url.searchParams.set('first', options.offset)
     if (options.limit !== undefined) url.searchParams.set('max', options.limit)
     const version = options['server-version'] ?? process.env.KC_SERVER_VERSION
-    if (version && /^groups\/[^/]+\/children$/.test(endpoint)) {
+    if (version && segments.length === 3 && segments[0] === 'groups' && segments[2] === 'children') {
       printJson(await listChildren(kc, url, version), options.fields, options.compressed)
     } else {
       await printResponse(await request(kc, url, 'GET'), options)
