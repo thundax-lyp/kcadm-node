@@ -147,3 +147,16 @@ vite.config.ts.timestamp-*
 
 # Turbo Repo
 .turbo
+
+# Local Keycloak matrix results
+/test/integration/results/
+
+# JetBrains IDE project files
+/.idea/
+
+# Python bytecode
+__pycache__/
+*.pyc
+
+# macOS Finder metadata
+.DS_Store
